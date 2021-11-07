@@ -3,9 +3,9 @@
     "path": "~/GitHub/Practical Machine Learning/Sciprt.R",
     "project_path": "Sciprt.R",
     "type": "r_source",
-    "hash": "1465084904",
+    "hash": "829167978",
     "contents": "",
-    "dirty": false,
+    "dirty": true,
     "created": 1636255909532.0,
     "source_on_save": false,
     "relative_order": 1,
@@ -13,15 +13,15 @@
         "tempName": "Untitled1",
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "42,0",
-        "scrollLine": "15"
+        "cursorPosition": "53,0",
+        "scrollLine": "28"
     },
     "folds": "",
-    "lastKnownWriteTime": 1636258799,
+    "lastKnownWriteTime": 1636271164,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1636258799252,
+    "last_content_update": 1636272297345,
     "read_only": false,
     "read_only_alternatives": []
 }

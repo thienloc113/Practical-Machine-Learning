@@ -1,0 +1,116 @@
+---
+title: "Regression model course project"
+author: "Loc Nguyen"
+date: "10/10/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Executive summary
+
+In this project, we look at mtcars data,  comprising of different aspects of automobile design for 32 automobiles. We are exploring the relationship between a set of variables and miles per gallon (MPG) (outcome).
+Through this report, we will answer two questions:  
+
+- Is an automatic or manual transmission better for MPG?
+- Quantify the MPG difference between automatic and manual transmissions  
+
+Some contents included in this report are:  
+
+- Load library and data
+- Preparing data and Exploratory Analysis
+- Model selections
+- Check model
+- Conclusion  
+
+
+## Loading libraries and data
+
+Loading necessary libraries for the report
+
+```{r libraries, results='hide', warning=FALSE,message=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(datasets)     
+```
+
+Load a data set of a collection of cars (mtcars)
+```{r load data}
+data(mtcars)
+```
+
+## Preparing data and Exploratory Analysis
+First, let's look few rows of data to consider the content it has
+```{r head data}
+head(mtcars)
+```
+In mtcars dataset, am == 0 stands for automatic transmission and am == 1 stands for manual transmission. So we will create a new variable (Transmission) with two value is "Automatic" and "Manual" based on 'am' variable.
+```{r transform}
+m1 <- mtcars %>%
+      mutate(Transmission = ifelse(am == 0, "Automatic", "Manual"))
+m1$Transmission <- as.factor(m1$Transmission)
+m1$am <- NULL
+```
+
+We can plot a box plot to show the relationship between MPG and transmission
+```{r plot explo}
+g <- ggplot(m1, aes(Transmission, mpg))
+g <- g +
+      geom_boxplot(aes(fill = Transmission))
+g
+
+```
+
+The figure shows that automatic transmission generally has lower mpg than manual.  
+We can fit a simple linear model of mpg by Transmission
+
+```{r just transmission}
+fit <- lm (mpg ~ Transmission, m1)
+summary(fit)$coefficients
+```
+
+*Transmission has a coefficient of 7.245, which means cars with manual tranmission has 7.245 better mpg than automatic ones. P-value of the regressor shows that the relationship is significant (0.0003<0.05)*
+
+## Model Selection
+However there might be other factors  are highly correlated with each other in the dataset.  
+So, we should calculate and look at the correlation matrix, to  find that the variables are highly correlated with each other in the dataset.
+
+```{r}
+print(cor(mtcars))
+```
+Therefore, the first simple model might not tell the full story. Let's now go to the other extreme end and fit all variables with mpg.
+```{r full mode}
+fit1 <- lm(mpg ~., m1)
+summary(fit1)$coefficients
+```
+So we see in here (full mode) the coefficient of transmission is not significant anymore. (p-value >0.05)  
+But include dummy-variables can lead to the problem that is over-fitting. 
+To find a reasonable model, we can use **step function** to find the best model for explaining mpg
+```{r best_fit}
+fit_best <- step(fit1, trace = 0)
+summary(fit_best)$coefficients
+```
+Transmission has a coefficient of 2.9358, which means cars with automatic tranmission has 2.9358 better mpg than manual ones.   
+The R-squared value is good enough to conclude and also p-values are quite significant.
+
+## Check model
+Let's plot some residual plots to understand more about the 'best' fit.
+```{r}
+layout(matrix(c(1:4),2,2))
+plot(fit_best)
+```
+
+If we do an anova with and without transmission variable, we can see the inclusion of transmission is statistically significant.
+
+```{r anova}
+anova(lm(mpg ~ wt + qsec, data = m1), fit_best)
+```
+
+## Conclusion
+First, if all other variables are holding, automatic transmission generally has lower mpg than manual
+Second, based on 'best' fit model which we can calculate from data, cars with manual transmission have 2.94 more mpg than that of automatic with p < 0.05 and R-squared 0.85.  
+But due to the fact that data we have is just small sample, the conclusion we have may be not indeed useful and need more data to check again.
+
+

@@ -1,0 +1,116 @@
+---
+title: "Practical Machine Learning Project"
+author: "Loc Nguyen"
+date: "11/7/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## About this project
+
+One thing that people regularly do is quantify how  much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants.
+The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases.
+
+## Background
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: <http://groupware.les.inf.puc-rio.br/har> (see the section on the Weight Lifting Exercise Dataset). 
+
+## Data
+The training data for this project are available here: 
+
+<https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv>
+
+The test data are available here:
+
+<https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv>
+
+The data for this project come from this source: <http://groupware.les.inf.puc-rio.br/har>.  
+
+## Approach
+Two models will be tested using decision tree and random forest. The model with the highest accuracy will be chosen as our final model. We will divide the train data in training data and cross-validation data. Here we are using validation set approach. (train data (75% of the original Training data set) and validation data (25%))
+The expected out-of-sample error will correspond to the quantity: 1-accuracy in the cross-validation data. Accuracy is the proportion of correct classified observation over the total sample
+
+
+## Loading libraries
+
+Loading necessary libraries for the report
+
+```{r libraries, results='hide', warning=FALSE,message=FALSE}
+library(ggplot2); library(caret); library(randomForest); library(rpart); library(rpart.plot)
+```
+
+## Loading data and pre-processing
+Load a data set
+```{r load data}
+training <- read.csv("pml-training.csv", na.strings = c("NA","#DIV/0!", ""))
+testing <- read.csv("pml-testing.csv", na.strings = c("NA","#DIV/0!", ""))
+
+```
+You can investigate data by str function. The training dataset has 19622 observations and 160 variables, and the testing data set contains 20 observations. We will build model based on training set
+```{r str, results='hide'}
+str(testing)
+str(training)
+```
+
+## Cleaning data
+We will delete columns which include all missing value
+```{r delete NA}
+training <- training[, colSums(is.na(training)) == 0]
+testing <- testing[, colSums(is.na(testing)) == 0]
+```
+
+Then we delete columns which are irrelevant, and have little predicting power, follow me these are columns from 1 to 7
+```{r irrevelant}
+trainset <-training[, -c(1:7)]
+testset <- testing[, -c(1:7)]
+```
+
+Then we change variable "classe" in training set to factor.  It will help us later when we predict our test data using our predictive model.
+```{r change class}
+trainset$classe <- as.factor(trainset$classe)
+```
+## Data splitting
+Partition the data so that 75% of the training dataset into training and the remaining 25% to validation set compute the out-of-sample errors.
+```{r subsample}
+set.seed(1712)
+inTrain <- createDataPartition(y=trainset$classe, p=0.75, list=FALSE)
+train <- trainset[inTrain, ] 
+valid <- trainset[-inTrain, ]
+table(train$classe)
+```
+So, the variable "classe" contains 5 levels: A, B, C, D and E. Level A is the most frequent while level D is the least frequent.
+
+## Building prediction algorithms
+We will investigate the classification trees and random forests to predict the outcome.  
+
+### 1. Classification trees
+```{r CT}
+model1 <- rpart(classe ~ ., data=train, method="class")
+prediction1 <- predict(model1, valid, type = "class")
+confusionMatrix(prediction1, valid$classe)
+```
+If we plot the classification trees
+```{r plot CT}
+rpart.plot(model1, main="Classification Tree", extra=100)
+
+```
+From the confusion matrix, the accuracy rate is 0.7445
+
+### 2. Random Forest
+```{r RF}
+model2 <- randomForest(classe ~. , data=train, method="class")
+prediction2 <- predict(model2, valid, type = "class")
+confusionMatrix(prediction2, valid$classe)
+```
+
+### Decision on which Prediction Model to Use
+Random Forest algorithm performed better than Decision Trees. Accuracy for Random Forest model was 0.995 compared to Decision Tree model with 0.739 The expected out-of-sample error of RF algorithm is 0.005. Although, This leads to high accuracy, although RD is difficult to interpret and computationally cost.
+
+## Prediction on Testing Set
+Here is the final outcome based on the Prediction Model 2 (Random Forest) applied for the testing set.
+
+```{r test}
+predict(model2, testset)
+```
